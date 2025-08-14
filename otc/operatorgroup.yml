@@ -1,0 +1,9 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  annotations:
+    olm.providedAPIs: Instrumentation.v1alpha1.opentelemetry.io,OpAMPBridge.v1alpha1.opentelemetry.io,OpenTelemetryCollector.v1alpha1.opentelemetry.io,OpenTelemetryCollector.v1beta1.opentelemetry.io,TargetAllocator.v1alpha1.opentelemetry.io
+  name: openshift-opentelemetry-operator
+  namespace: openshift-opentelemetry-operator
+spec:
+  upgradeStrategy: Default

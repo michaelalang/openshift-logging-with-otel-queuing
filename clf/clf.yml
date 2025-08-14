@@ -1,0 +1,36 @@
+apiVersion: observability.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  annotations:
+    observability.openshift.io/tech-preview-otlp-output: enabled
+  name: logging
+  namespace: openshift-logging
+spec:
+  collector:
+    resources:
+      limits:
+        cpu: '6'
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 64Mi
+  managementState: Managed
+  outputs:
+    - name: otlp
+      otlp:
+        tuning:
+          deliveryMode: AtLeastOnce
+          maxRetryDuration: 20
+          minRetryDuration: 5
+        url: http://otel-collector.openshift-logging.svc.cluster.local:4318/v1/logs
+      type: otlp
+  pipelines:
+    - inputRefs:
+        - infrastructure
+        - audit
+        - application
+      name: otlppipeline
+      outputRefs:
+        - otlp
+  serviceAccount:
+    name: clfotlp

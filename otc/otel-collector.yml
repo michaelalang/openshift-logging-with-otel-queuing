@@ -1,0 +1,106 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: openshift-logging
+spec:
+  config:
+    exporters:
+      debug:
+        sampling_initial: 5
+        sampling_thereafter: 200
+        verbosity: detailed
+      otlphttp/loki:
+        endpoint: https://loki.apps.example.com/otlp
+        retry_on_failure:
+          enabled: true
+          initial_interval: 60s
+          max_elapsed_time: 86400s
+          max_interval: 86400s
+        sending_queue:
+          queue_size: 10000000
+          storage: file_storage
+        tls:
+          insecure_skip_verify: true
+    extensions:
+      file_storage:
+        compaction:
+          cleanup_on_start: false
+          directory: /queues/compact/
+          on_start: false
+        create_directory: true
+        directory: /queues/work/
+        fsync: true
+        timeout: 1s
+    processors:
+      batch:
+        send_batch_max_size: 1024
+        send_batch_size: 1024
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 1000
+        spike_limit_percentage: 10
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    service:
+      extensions:
+        - file_storage
+      pipelines:
+        logs:
+          exporters:
+            - otlphttp/loki
+          processors:
+            - memory_limiter
+            - batch
+          receivers:
+            - otlp
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+  configVersions: 3
+  daemonSetUpdateStrategy: {}
+  deploymentUpdateStrategy: {}
+  ingress:
+    route: {}
+  ipFamilyPolicy: SingleStack
+  managementState: managed
+  mode: statefulset
+  observability:
+    metrics: {}
+  podDnsConfig: {}
+  replicas: 1
+  resources: {}
+  targetAllocator:
+    allocationStrategy: consistent-hashing
+    collectorNotReadyGracePeriod: 30s
+    filterStrategy: relabel-config
+    observability:
+      metrics: {}
+    prometheusCR:
+      scrapeInterval: 30s
+    resources: {}
+  upgradeStrategy: automatic
+  volumeClaimTemplates:
+    - metadata:
+        name: otel-queue
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: hostpath-csi
+      status: {}
+  volumeMounts:
+    - mountPath: /queues
+      name: otel-queue

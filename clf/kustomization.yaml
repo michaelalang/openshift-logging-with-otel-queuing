@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- clf.yml
+- namespace.yml
+- operatorgroup.yml
+- rolebinding.yml
+- sa.yml
+- subscription.yml
+
+namespace: openshift-logging
